@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Directory that contains keys
+# Directory that contains keys and certificates
 TMP_FOLDER='/tmp/minipki'
 mkdir -p $TMP_FOLDER
 
@@ -14,6 +14,8 @@ INTERMEDIATE_CA_REQUEST="${TMP_FOLDER}/intermediate_ca_request.csr"
 SERVER_PRIVATE_KEY="${TMP_FOLDER}/server_private.key"
 SERVER_CERTIFICATE="${TMP_FOLDER}/server_certificate.crt"
 SERVER_REQUEST="${TMP_FOLDER}/server_request.csr"
+
+EXTENSION_FILE="../config/extensions.ini"
 
 ###################
 # Root CA         #
@@ -39,6 +41,8 @@ openssl req -sha256 -noenc \
     -keyout $INTERMEDIATE_CA_PRIVATE_KEY \
     -out $INTERMEDIATE_CA_REQUEST \
     -subj "/C=FR/ST=France/L=Paris/O=MiniPKI/CN=intermediate.ca" \
+    -addext "basicConstraints=critical,CA:true" \
+    -addext "keyUsage=critical,keyCertSign,cRLSign" \
     -quiet
 
 # Display request info and verify the self-signature :
@@ -51,7 +55,9 @@ openssl x509 -req \
     -CAkey $ROOT_CA_PRIVATE_KEY \
     -out $INTERMEDIATE_CA_CERTIFICATE \
     -days 365 \
-    -sha256
+    -sha256 \
+    -extfile $EXTENSION_FILE \
+    -extensions v3_intermediate_ca
 
 # Display intermediate certificate
 # openssl x509 -in /tmp/minipki/intermediate_ca_certificate.crt -noout -text
